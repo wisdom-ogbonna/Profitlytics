@@ -39,13 +39,16 @@ export default function Login() {
           </button>
         </div>
       </div>
-      <div className="text-left flex items-center space-x-2">
+      <div className="grid grid-cols-2">
+        <div className="text-left flex items-center space-x-2">
         <input
           id="remember"
           type="checkbox"
           className="border border-gray-400 rounded"
         />
         <label htmlFor="remember" className="text-sm">Remember Me</label>
+      </div>
+      <p className="text-sm hover:underline text-right"><a href="">Forgot Password?</a></p>
       </div>
       <button
         type="submit"

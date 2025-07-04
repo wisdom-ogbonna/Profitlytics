@@ -15,7 +15,7 @@ export default function Auth() {
 
         <div className="text-center text-sm">
           {isSignup ? (
-            <p>
+            <p className="text-lg">
               Already have an account?{" "}
               <button
                 onClick={() => setIsSignup(false)}
@@ -25,7 +25,7 @@ export default function Auth() {
               </button>
             </p>
           ) : (
-            <p>
+            <p className="text-lg">
               Don't have an account?{" "}
               <button
                 onClick={() => setIsSignup(true)}
