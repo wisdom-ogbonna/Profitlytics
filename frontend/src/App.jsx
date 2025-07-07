@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './Pages/Dashboard';
 import Auth from './Pages/Auth';
 import NotFound from './Pages/Notfound';
+import DataAnalyzer from './Pages/DataAnalyzer';
+
+
 
 export default function App() {
   return (
@@ -10,6 +13,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Auth />} />
         <Route path="/dashboard" element={<Dashboard />} />
+   
+        <Route path="/aianalytics" element={<DataAnalyzer />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
