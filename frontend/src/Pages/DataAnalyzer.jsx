@@ -1,28 +1,52 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
 import { FaUpload, FaChartBar, FaRobot } from "react-icons/fa";
-import { Line } from "react-chartjs-2";
-import ReactMarkdown from "react-markdown";
+
+
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
   Tooltip,
   Legend,
-} from "chart.js";
+} from "recharts";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+const ChartSection = ({ chartData }) => {
+  const { x_field, y_field, labels, values } = chartData;
+
+  // Format data for Recharts
+  const formattedData = labels.map((label, index) => ({
+    [x_field]: label,
+    [y_field]: values[index],
+  }));
+
+  return (
+    <section className="mt-6">
+      <h2 className="text-xl font-semibold text-blue-700 mb-4">📈 Chart</h2>
+      <div className="w-full h-64 bg-white shadow-md p-4 rounded-lg">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={formattedData}>
+            <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
+            <XAxis dataKey={x_field} />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey={y_field}
+              stroke="#3b82f6"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
+};
 
 const DataAnalyzer = () => {
   const [file, setFile] = useState(null);
@@ -113,23 +137,6 @@ const DataAnalyzer = () => {
     </div>
   );
 
-  const renderChart = (chartData) => {
-    const data = {
-      labels: chartData.labels,
-      datasets: [
-        {
-          label: chartData.y_field?.toString() || "Value",
-          data: chartData.values,
-          fill: false,
-          borderColor: "rgb(75, 192, 192)",
-          tension: 0.1,
-        },
-      ],
-    };
-
-    return <Line data={data} options={{ responsive: true }} />;
-  };
-
   return (
     <div className="min-h-screen p-6 bg-gray-100 text-gray-800">
       <div className="max-w-6xl mx-auto bg-white shadow rounded-lg p-6">
@@ -200,43 +207,45 @@ const DataAnalyzer = () => {
 
             {/* Stats */}
             <section>
-              <h2 className="text-xl font-semibold text-blue-700 mb-4">
-                📊 Stats
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                  <thead>
-                    <tr className="bg-blue-100 text-blue-800">
-                      <th className="py-2 px-4 border-b">Year</th>
-                      <th className="py-2 px-4 border-b">Count</th>
-                      <th className="py-2 px-4 border-b">Mean</th>
-                      <th className="py-2 px-4 border-b">Min</th>
-                      <th className="py-2 px-4 border-b">Max</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(analysis.stats).map(([year, values]) => (
-                      <tr key={year} className="hover:bg-blue-50">
-                        <td className="py-2 px-4 border-b font-medium text-gray-700">
-                          {year}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {values.count}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {Number(values.mean).toFixed(2)}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {values.min}
-                        </td>
-                        <td className="py-2 px-4 border-b text-center">
-                          {values.max}
-                        </td>
+              <section>
+                <h2 className="text-xl font-semibold text-blue-700 mb-4">
+                  📊 Stats
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead>
+                      <tr className="bg-blue-100 text-blue-800">
+                        <th className="py-2 px-4 border-b">Year</th>
+                        <th className="py-2 px-4 border-b">Count</th>
+                        <th className="py-2 px-4 border-b">Mean</th>
+                        <th className="py-2 px-4 border-b">Min</th>
+                        <th className="py-2 px-4 border-b">Max</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {Object.entries(analysis.stats).map(([year, values]) => (
+                        <tr key={year} className="hover:bg-blue-50">
+                          <td className="py-2 px-4 border-b font-medium text-gray-700">
+                            {year}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {values.count}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {Number(values.mean).toFixed(2)}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {values.min}
+                          </td>
+                          <td className="py-2 px-4 border-b text-center">
+                            {values.max}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             </section>
 
             {/* Chart Data */}
@@ -244,19 +253,16 @@ const DataAnalyzer = () => {
               <h2 className="text-xl font-semibold text-blue-700 mb-2">
                 📈 Chart Data
               </h2>
-              {renderChart(analysis.chart_data)}
+              <ChartSection chartData={analysis.chart_data} />
             </section>
 
             {/* AI Insight */}
-            <section className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
-              <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-3 mb-4">
-                <FaRobot className="text-blue-600 text-3xl" />
-                AI Insight
+            <section>
+              <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                <FaRobot /> AI Insight
               </h2>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 overflow-auto">
-                <article className="prose prose-sm prose-blue max-w-none">
-                  <ReactMarkdown>{analysis.insight}</ReactMarkdown>
-                </article>
+              <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded text-sm whitespace-pre-wrap shadow">
+                {analysis.insight}
               </div>
             </section>
           </div>

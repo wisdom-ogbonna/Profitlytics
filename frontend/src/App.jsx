@@ -13,7 +13,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Auth />} />
         <Route path="/dashboard" element={<Dashboard />} />
-   
         <Route path="/aianalytics" element={<DataAnalyzer />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
