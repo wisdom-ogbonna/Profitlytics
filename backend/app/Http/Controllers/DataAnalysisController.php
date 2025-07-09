@@ -10,90 +10,123 @@ class DataAnalysisController extends Controller
 {
     public function analyze(Request $request)
     {
+        // 1. Validate file input
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
 
-        // Step 1: Load and structure data
-        $data = Excel::toArray([], $request->file('excel_file'));
-        if (empty($data) || count($data[0]) < 2) {
-            return response()->json(['error' => 'Dataset is empty or improperly formatted.'], 422);
+        // 2. Load Excel data
+        $rawData = Excel::toArray([], $request->file('excel_file'));
+        if (empty($rawData) || count($rawData[0]) < 2) {
+            return response()->json(['error' => 'Uploaded file is empty or not properly formatted.'], 422);
         }
 
-        $headers = $data[0][0]; // First row = headers
-        $rows = array_slice($data[0], 1); // Skip header row
+        // 3. Extract headers and data rows
+        $headers = $rawData[0][0];              // First row = headers
+        $rows = array_slice($rawData[0], 1);    // Remaining rows = data
 
-        // Step 2: Convert to associative array
-        $structured = [];
-        foreach ($rows as $row) {
-            if (count($row) === count($headers)) {
-                $structured[] = array_combine($headers, $row);
-            }
-        }
+        // 4. Convert to associative array
+        $structured = array_filter(array_map(function ($row) use ($headers) {
+            return count($row) === count($headers)
+                ? array_combine($headers, $row)
+                : null;
+        }, $rows));
 
-        // Step 3: Basic Cleaning
+        // 5. Clean each value
         $cleaned = array_map(function ($row) {
-            return array_map(function ($value) {
-                return trim((string)$value); // Clean whitespace and ensure string
-            }, $row);
+            return array_map(fn($v) => trim((string)$v), $row);
         }, $structured);
 
-        // Step 4: Basic stats
+        // 6. Generate basic column statistics
         $columnStats = [];
         foreach ($headers as $col) {
-            $numericValues = array_filter(array_column($cleaned, $col), fn($v) => is_numeric($v));
+            $values = array_column($cleaned, $col);
+            $numericValues = array_filter($values, fn($v) => is_numeric($v));
             $count = count($numericValues);
+
             if ($count > 0) {
                 $mean = array_sum($numericValues) / $count;
-                $min = min($numericValues);
-                $max = max($numericValues);
-                $columnStats[$col] = compact('count', 'mean', 'min', 'max');
+                $columnStats[$col] = [
+                    'count' => $count,
+                    'mean'  => round($mean, 2),
+                    'min'   => min($numericValues),
+                    'max'   => max($numericValues),
+                ];
             }
         }
 
-        // Step 5: Chart data
+        // 7. Extract chart data (X: first column, Y: second column if numeric)
         $xField = $headers[0] ?? 'X';
         $yField = $headers[1] ?? 'Y';
 
         $chartLabels = [];
         $chartValues = [];
+
         foreach ($cleaned as $row) {
             $chartLabels[] = $row[$xField] ?? 'N/A';
             $chartValues[] = is_numeric($row[$yField] ?? null) ? (float)$row[$yField] : 0;
         }
 
-        // Step 6: Multi-turn AI chat conversation
+        // 8. Prepare AI analysis prompt
         $datasetJson = json_encode(array_slice($cleaned, 0, 50));
 
-        $messages = [
-            ['role' => 'system', 'content' => 'You are a professional data analyst.'],
-            ['role' => 'user', 'content' => "Here is a dataset:\n\n$datasetJson"],
-            ['role' => 'user', 'content' => "1. Summarize the dataset.\n2. Identify missing or inconsistent data.\n3. Highlight trends or patterns."],
-            ['role' => 'assistant', 'content' => 'Okay, let me process that.'],
-            ['role' => 'user', 'content' => "Now provide 3 key business insights from this data."],
-            ['role' => 'user', 'content' => "Also suggest actionable recommendations based on the trends you identified."],
-            ['role' => 'user', 'content' => "Finally, suggest what additional data would improve future analysis."]
-        ];
+        $prompt = <<<EOT
+You are a professional data analyst.
 
+Given this dataset:
+
+$datasetJson
+
+Return the following in JSON format (no extra text, no markdown):
+{
+  "summary": "Brief summary of the dataset",
+  "issues": "Any missing or inconsistent data patterns",
+  "trends": "Trends or correlations you observe",
+  "insights": "3 key business insights",
+  "recommendations": "Actionable business suggestions",
+  "additional_data_needed": "Data that would improve future analysis"
+}
+EOT;
+
+        // 9. Send to OpenAI API
         $response = Http::withToken(env('OPENAI_API_KEY'))->post('https://api.openai.com/v1/chat/completions', [
             'model' => 'gpt-3.5-turbo',
-            'messages' => $messages,
+            'messages' => [
+                ['role' => 'system', 'content' => 'You are a professional data analyst. Return valid JSON only.'],
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'temperature' => 0.3,
         ]);
 
-        $aiInsight = $response->json()['choices'][0]['message']['content'] ?? 'AI did not return a response.';
+        // 10. Handle and decode AI response
+        $rawAi = $response->json()['choices'][0]['message']['content'] ?? null;
+        $start = strpos($rawAi, '{');
+        $jsonText = $start !== false ? substr($rawAi, $start) : $rawAi;
 
-        // Final response
+        try {
+            $aiInsights = json_decode($jsonText, true);
+            if (!$aiInsights) {
+                throw new \Exception('Invalid JSON from AI');
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to parse AI output.',
+                'raw' => $rawAi
+            ], 500);
+        }
+
+        // 11. Return structured analytics
         return response()->json([
-            'columns' => $headers,
-            'preview' => array_slice($cleaned, 0, 5),
-            'stats' => $columnStats,
-            'chart_data' => [
+            'columns'     => $headers,
+            'preview'     => array_slice($cleaned, 0, 5),
+            'stats'       => $columnStats,
+            'chart_data'  => [
                 'x_field' => $xField,
                 'y_field' => $yField,
-                'labels' => $chartLabels,
-                'values' => $chartValues,
+                'labels'  => $chartLabels,
+                'values'  => $chartValues,
             ],
-            'insight' => $aiInsight,
+            'ai_analysis' => $aiInsights
         ]);
     }
 }
