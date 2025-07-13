@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataAnalysisController;
 
 Route::post('/analyze', [DataAnalysisController::class, 'analyze']);
+Route::post('/generate-website', [WebsiteGeneratorController::class, 'generate']);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
