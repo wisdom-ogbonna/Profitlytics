@@ -30,6 +30,7 @@ const Dashboard = () => {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, []);
 
+  
   // file selection handler
   const handleFileChange = (e) => {
     if (!e.target.files.length) return;
@@ -218,7 +219,7 @@ const Dashboard = () => {
 
       {/* Charts Section */}
       <section aria-labelledby="charts-heading" className="mb-10">
-        <h2 id="charts-heading" className="text-2xl font-semibold mb-5">12 Month Trend Analysis</h2>
+        <h2 id="charts-heading" className="text-2xl font-semibold mb-5">VIsualization</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {["Line Graph", "Bar Graph", "Pie Chart"].map((label, i) => (
             <div key={i} className="bg-white p-4 rounded-lg shadow h-40 flex items-center justify-center">
@@ -230,7 +231,7 @@ const Dashboard = () => {
 
       {/* History Section */}
       <section aria-labelledby="history-heading">
-        <h2 id="history-heading" className="text-2xl font-bold mb-4">History</h2>
+        <h2 id="history-heading" className="text-2xl font-bold mb-4">AI INSIGHT</h2>
         <ul className="grid gap-2 text-sm">
           <li className="grid grid-cols-2 font-semibold bg-gray-200 p-2 rounded">
             <span className="ml-4 text-left font-bold text-lg">Title</span>
