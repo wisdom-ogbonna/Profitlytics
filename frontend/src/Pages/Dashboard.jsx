@@ -106,6 +106,13 @@ const Dashboard = () => {
             ✕
           </button>
         </div>
+        <div className="mt-14 flex flex-col space-y-5 text-xl text-left">
+            <p className="hover:bg-blue-900 py-2 px-1 rounded-lg"><Link to="/dashboard">Dashboard</Link></p>
+            <p className="hover:bg-blue-900 py-2 px-1 rounded-lg"><Link to="/data-cleaning">Data Cleaning</Link></p>
+            <p className="hover:bg-blue-900 py-2 px-1 rounded-lg"><Link to="/ai-analytics">Data Analytics</Link></p>
+            <p className="hover:bg-blue-900 py-2 px-1 rounded-lg"><Link to="/cv-creation">CV Creation</Link></p>
+            <p className="hover:bg-blue-900 py-2 px-1 rounded-lg"><Link to="/job-finder">Job Finder</Link></p>
+          </div>
       </aside>
 
       {/* Header */}
@@ -194,7 +201,6 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-      <div><p className="text-red-400">NOTE: <code className="text-green-600">.csv</code> files only</p></div>
 
       {/* Overview Cards */}
       <section aria-labelledby="overview-heading" className="mb-6">
