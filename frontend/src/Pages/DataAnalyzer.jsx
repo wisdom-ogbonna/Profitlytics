@@ -9,16 +9,20 @@ const DataAnalyzer = () => {
   const [result, setResult] = useState(null);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-4">📁 AI Data Analyzer</h1>
-      <FileUpload onUpload={setResult} />
+    <div className="max-w-7xl mx-auto px-6 py-10">
+      <h1 className="text-4xl font-bold text-indigo-600 mb-6">📊 AI Data Analyzer</h1>
+
+      <div className="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+        <FileUpload onUpload={setResult} />
+      </div>
+
       {result && (
-        <>
+        <div className="mt-8 space-y-8">
           <DataPreview preview={result.preview} />
           <StatsTable stats={result.stats} />
-          <ChartView chartData={result.chart_data} />
+          <ChartView charts={result.charts} />
           <AIInsights ai_analysis={result.ai_analysis} />
-        </>
+        </div>
       )}
     </div>
   );
